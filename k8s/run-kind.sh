@@ -11,17 +11,36 @@ UAA_ADMIN_CLIENT_SECRET_LOCATION="${UAA_CONFIG_DIR}/admin_client_secret.json"
 ensure_kind_cluster() {
   local cluster="$1"
   if ! kind get clusters | grep -q "${cluster}"; then
+    ./gencert.sh
     cat <<EOF | kind create cluster --name "${cluster}" --wait 5m --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
+  extraMounts:
+  - containerPath: /ssl
+    hostPath: $SCRIPT_DIR/ssl
+    readOnly: true
   kubeadmConfigPatches:
   - |
     kind: InitConfiguration
     nodeRegistration:
       kubeletExtraArgs:
         node-labels: "ingress-ready=true"
+  - |
+    kind: ClusterConfiguration
+    apiServer:
+      extraVolumes:
+        - name: ssl-certs
+          hostPath: /ssl
+          mountPath: /etc/uaa-ssl
+      extraArgs:
+        oidc-issuer-url: https://localhost
+        oidc-client-id: app
+        oidc-ca-file: /etc/uaa-ssl/ca.pem
+        oidc-username-claim: email
+        oidc-username-prefix: "oidc:"
+
   extraPortMappings:
   - containerPort: 80
     hostPort: 80
@@ -98,7 +117,7 @@ wait_for_availability() {
 }
 
 configure_admin_access() {
-  uaac target http://localhost --skip-ssl-validation
+  uaac target https://localhost --skip-ssl-validation
   uaac token client get admin -s $(cat $HOME/.uaa/admin_client_secret.json | jq .admin.client_secret -e -r)
 }
 
