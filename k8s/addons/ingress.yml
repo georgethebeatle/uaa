@@ -1,5 +1,5 @@
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: uaa-ingress
@@ -8,6 +8,9 @@ spec:
   - http:
       paths:
       - path: /
+        pathType: Prefix
         backend:
-          serviceName: uaa
-          servicePort: 8080
+          service:
+            name: uaa
+            port:
+              number: 80
