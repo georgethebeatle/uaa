@@ -1,16 +1,45 @@
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: cert-manager.io/v1
+kind: Certificate
 metadata:
-  name: uaa-ingress
+  name: uaa-ingress-cert
 spec:
-  rules:
-  - http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: uaa
-            port:
-              number: 80
+  commonName: localhost
+  dnsNames:
+  - localhost
+  issuerRef:
+    kind: Issuer
+    name: selfsigned-issuer
+  secretName: uaa-ingress-cert
+
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  labels:
+    app: uaa-deployment
+  name: uaa-proxy
+spec:
+  routes:
+  - conditions:
+    - prefix: /
+    services:
+    - name: uaa
+      port: 443
+      validation:
+        caSecret: uaa-ingress-cert
+        subjectName: uaa.svc.cluster.local
+    timeoutPolicy:
+      response: 5m
+  virtualhost:
+    fqdn: localhost
+    tls:
+      secretName: uaa-ingress-cert

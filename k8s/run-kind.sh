@@ -26,10 +26,7 @@ nodes:
   - containerPort: 80
     hostPort: 80
     protocol: TCP
-  - containerPort: 8080
-    hostPort: 8080
-    protocol: TCP
-  - containerPort: 8443
+  - containerPort: 443
     hostPort: 443
     protocol: TCP
 EOF
@@ -105,11 +102,24 @@ configure_admin_access() {
   uaac token client get admin -s $(cat $HOME/.uaa/admin_client_secret.json | jq .admin.client_secret -e -r)
 }
 
+install_cert_manager() {
+  echo "*************************"
+  echo " Installing Cert Manager"
+  echo "*************************"
+
+  kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
+
+  kubectl -n cert-manager rollout status deployment/cert-manager --watch=true
+  kubectl -n cert-manager rollout status deployment/cert-manager-webhook --watch=true
+  kubectl -n cert-manager rollout status deployment/cert-manager-cainjector --watch=true
+}
+
 main() {
   pushd "$SCRIPT_DIR"
   {
     ensure_kind_cluster uaa
     install_contour
+    install_cert_manager
     get_admin_client_secret
     ytt_and_minikube "${@}"
     check_k8s_for_admin_client_secret

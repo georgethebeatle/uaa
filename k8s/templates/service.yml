@@ -2,15 +2,17 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: uaa
+  annotations:
+    projectcontour.io/upstream-protocol.tls: "443"
   labels:
     app: uaa-deployment
+  name: uaa
 spec:
-  type: ClusterIP
   ports:
-  - port: 80
-    name: http-uaa
-    targetPort: 8080
+  - name: web
+    port: 443
     protocol: TCP
+    targetPort: 8080
   selector:
     app: uaa-deployment
+  type: ClusterIP
