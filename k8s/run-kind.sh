@@ -35,11 +35,12 @@ nodes:
           hostPath: /ssl
           mountPath: /etc/uaa-ssl
       extraArgs:
-        oidc-issuer-url: https://localhost
+        oidc-issuer-url: https://localhost/oauth/token
         oidc-client-id: app
         oidc-ca-file: /etc/uaa-ssl/ca.pem
-        oidc-username-claim: email
+        oidc-username-claim: user_name
         oidc-username-prefix: "oidc:"
+        oidc-signing-algs: "RS256"
 
   extraPortMappings:
   - containerPort: 80
@@ -121,16 +122,16 @@ configure_admin_access() {
   uaac token client get admin -s $(cat $HOME/.uaa/admin_client_secret.json | jq .admin.client_secret -e -r)
 }
 
-install_cert_manager() {
-  echo "*************************"
-  echo " Installing Cert Manager"
-  echo "*************************"
+create_ingress_secret() {
+  kubectl delete secret uaa-ingress-cert --ignore-not-found
+  kubectl create secret tls uaa-ingress-cert \
+    --cert="$SCRIPT_DIR/ssl/cert.pem" \
+    --key="$SCRIPT_DIR/ssl/key.pem"
+}
 
-  kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
-
-  kubectl -n cert-manager rollout status deployment/cert-manager --watch=true
-  kubectl -n cert-manager rollout status deployment/cert-manager-webhook --watch=true
-  kubectl -n cert-manager rollout status deployment/cert-manager-cainjector --watch=true
+configure_pesho() {
+  uaac client add app --name app --scope openid --authorized_grant_types authorization_code --secret app --redirect_uri http://localhost:8000
+  uaac user add pesho --emails pesho@pesho.org -p pesho
 }
 
 main() {
@@ -138,12 +139,13 @@ main() {
   {
     ensure_kind_cluster uaa
     install_contour
-    install_cert_manager
+    create_ingress_secret
     get_admin_client_secret
     ytt_and_minikube "${@}"
     check_k8s_for_admin_client_secret
     wait_for_availability
     configure_admin_access
+    configure_pesho
   }
   popd
 }
