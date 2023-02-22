@@ -9,19 +9,6 @@ subjects:
 roleRef:
   kind: ClusterRole
   name: pesho-role
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: pesho-uber-user-role-binding
-subjects:
-  - kind: User
-    name: oidc:pesho
-roleRef:
-  kind: ClusterRole
-  name: cluster-admin
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
