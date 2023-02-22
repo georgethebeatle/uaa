@@ -42,4 +42,4 @@ uaa/slateCustomizations/source/versionfile
 
 ci/dockerfile/Dockerfile
 logs/**
-k8s/ssl
+k8s/templates/ssl

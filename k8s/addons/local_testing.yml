@@ -1,5 +1,6 @@
 #@data/values
 #@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:data", "data")
 ---
 admin:
   client_secret: FAKE_ADMIN_CLIENT_SECRET
@@ -15,7 +16,7 @@ jwt:
     activeKeyId: FAKE_JWT_SIGNING_KEY_DO_NOT_USE
     keys:
       FAKE_JWT_SIGNING_KEY_DO_NOT_USE:
-        signingKey: FAKE_SIGNING_KEY
+        signingKey: #@ data.read("ssl/key.pem")
 
 #@overlay/replace
 encryption:

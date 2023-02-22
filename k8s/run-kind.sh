@@ -19,7 +19,7 @@ nodes:
 - role: control-plane
   extraMounts:
   - containerPath: /ssl
-    hostPath: $SCRIPT_DIR/ssl
+    hostPath: $SCRIPT_DIR/templates/ssl
     readOnly: true
   kubeadmConfigPatches:
   - |
@@ -125,8 +125,8 @@ configure_admin_access() {
 create_ingress_secret() {
   kubectl delete secret uaa-ingress-cert --ignore-not-found
   kubectl create secret tls uaa-ingress-cert \
-    --cert="$SCRIPT_DIR/ssl/cert.pem" \
-    --key="$SCRIPT_DIR/ssl/key.pem"
+    --cert="$SCRIPT_DIR/templates/ssl/cert.pem" \
+    --key="$SCRIPT_DIR/templates/ssl/key.pem"
 }
 
 configure_pesho() {

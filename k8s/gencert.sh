@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
-SSL_DIR="$SCRIPT_DIR/ssl"
+SSL_DIR="$SCRIPT_DIR/templates/ssl"
 
 mkdir -p "$SSL_DIR"
 
@@ -21,9 +21,9 @@ subjectAltName = @alt_names
 DNS.1 = localhost
 EOF
 
-openssl genrsa -out "$SSL_DIR/ca-key.pem" 2048
+openssl genrsa --traditional -out "$SSL_DIR/ca-key.pem" 2048
 openssl req -x509 -new -nodes -key "$SSL_DIR/ca-key.pem" -days 10 -out "$SSL_DIR/ca.pem" -subj "/CN=kube-ca"
 
-openssl genrsa -out "$SSL_DIR/key.pem" 2048
+openssl genrsa --traditional -out "$SSL_DIR/key.pem" 2048
 openssl req -new -key "$SSL_DIR/key.pem" -out "$SSL_DIR/csr.pem" -subj "/CN=kube-ca" -config "$SSL_DIR/req.cnf"
 openssl x509 -req -in "$SSL_DIR/csr.pem" -CA "$SSL_DIR/ca.pem" -CAkey "$SSL_DIR/ca-key.pem" -CAcreateserial -out "$SSL_DIR/cert.pem" -days 10 -extensions v3_req -extfile "$SSL_DIR/req.cnf"
